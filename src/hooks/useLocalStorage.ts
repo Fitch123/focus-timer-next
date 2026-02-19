@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 
 export default function useLocalStorage<T>(key: string, initialValue: T) {
-  const [value, setValue] = useState<T>(() => {
-    try {
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : initialValue;
-    } catch {
-      return initialValue;
-    }
-  });
+  const [value, setValue] = useState<T>(initialValue); // always use initialValue on server
 
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
+    // Only read localStorage on the client after mount
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) setValue(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
   }, [key, value]);
 
   return [value, setValue] as const;

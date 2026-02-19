@@ -27,6 +27,7 @@ interface UseTimerReturn {
   decreaseFocus: () => void;
   increaseBreak: () => void;
   decreaseBreak: () => void;
+  loadTodaySessions: () => Promise<number>;
 }
 
 export default function useTimer(): UseTimerReturn {
@@ -55,6 +56,7 @@ export default function useTimer(): UseTimerReturn {
 
   const hasCompletedRef = useRef(false);
   const { user } = useAuth();
+  const userRef = useRef<typeof user>(null);
 
   useEffect(() => setIsRunning(false), []);
 
@@ -68,47 +70,18 @@ export default function useTimer(): UseTimerReturn {
     new Audio(sound).play().catch(() => {});
   }
 
-  async function handleSessionComplete(currentMode: "focus" | "break") {
-    setIsRunning(false);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
-    if (currentMode === "focus") {
-      if (user) {
-        setSessions((prev) => {
-          const newCount = prev + 1;
-          if (newCount === DAILY_GOAL) celebrateGoal();
-          return newCount;
-        });
-
-        const { error: insertError } = await supabase.from("sessions").insert({
-          user_id: user.id,
-          duration: focusMinutes,
-          completed_at: new Date().toISOString(),
-        });
-
-        if (insertError) {
-          console.error(insertError);
-          setSessions((prev) => Math.max(0, prev - 1));
-          return;
-        }
-
-        calculateStreak();
-      }
-
-      notify("break");
-      setMode("break");
-      setTimeLeft(breakMinutes * 60);
-    } else {
-      notify("focus");
-      setMode("focus");
-      setTimeLeft(focusMinutes * 60);
-    }
-  }
+  console.log("user from useAuth:", user);
 
   useEffect(() => {
     if (!isRunning) return;
 
     hasCompletedRef.current = false;
     const currentMode = mode;
+    const currentDuration = focusMinutes;
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -116,7 +89,41 @@ export default function useTimer(): UseTimerReturn {
           clearInterval(interval);
           if (!hasCompletedRef.current) {
             hasCompletedRef.current = true;
-            handleSessionComplete(currentMode);
+
+            const liveUser = userRef.current; // ✅ always the latest value
+            console.log("🟡 liveUser at completion:", liveUser);
+
+            if (currentMode === "focus" && liveUser) {
+              supabase
+                .from("sessions")
+                .insert({
+                  user_id: liveUser.id,
+                  duration: currentDuration,
+                  completed_at: new Date().toISOString(),
+                })
+                .then(({ error, status }) => {
+                  console.log("🔵 Insert result:", { error, status });
+                  if (!error) {
+                    setSessions((prev) => {
+                      const newCount = prev + 1;
+                      if (newCount >= DAILY_GOAL) celebrateGoal();
+                      return newCount;
+                    });
+                    calculateStreak();
+                  }
+                });
+            }
+
+            // switch mode
+            if (currentMode === "focus") {
+              notify("break");
+              setMode("break");
+              setTimeLeft(breakMinutes * 60);
+            } else {
+              notify("focus");
+              setMode("focus");
+              setTimeLeft(focusMinutes * 60);
+            }
           }
           return 0;
         }
@@ -125,7 +132,7 @@ export default function useTimer(): UseTimerReturn {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, mode]);
+  }, [isRunning, mode, focusMinutes, breakMinutes]); // user removed from deps — we use the ref instead
 
   useEffect(() => {
     if (mode === "break" && timeLeft === 5) {
@@ -162,6 +169,7 @@ export default function useTimer(): UseTimerReturn {
 
   async function loadTodaySessions() {
     if (!user) return 0;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -171,7 +179,8 @@ export default function useTimer(): UseTimerReturn {
       .eq("user_id", user.id)
       .gte("completed_at", today.toISOString());
 
-    if (error) console.error(error);
+    if (error) console.error("Load sessions error:", error);
+
     setSessions(count ?? 0);
     return count ?? 0;
   }
@@ -241,5 +250,6 @@ export default function useTimer(): UseTimerReturn {
     decreaseFocus,
     increaseBreak,
     decreaseBreak,
+    loadTodaySessions,
   };
 }

@@ -32,10 +32,6 @@ export default function Timer({
       >
         {minutes}:{seconds}
       </h1>
-      <div className="flex gap-4 text-sm text-gray-400">
-        <span>🔥 Streak: {streak} days</span>
-        <span>🏆 Best: {bestStreak} days</span>
-      </div>
       {!isMini && (
         <p className="text-sm text-gray-400 mt-2">
           Focus: {focusMinutes} min · Break: {breakMinutes} min

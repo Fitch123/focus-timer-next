@@ -8,17 +8,16 @@ import Timer from "./Timer";
 import MiniToggle from "./MiniToggle";
 import Stats from "./Stats";
 import { supabase } from "../lib/supabase";
+import AuthModal from "./AuthModal"; // import your modal
 
-interface TimerPageProps {
-  openLogin: () => void;
-}
-
-export default function TimerPage({ openLogin }: TimerPageProps) {
+export default function TimerPage() {
   const [user, setUser] = useState<any | null>(null);
   const [isMini, setIsMini] = useState<boolean>(
-    () => localStorage.getItem("isMini") === "true",
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("isMini") === "true",
   );
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const {
     focusMinutes,
@@ -38,17 +37,28 @@ export default function TimerPage({ openLogin }: TimerPageProps) {
     decreaseFocus,
     increaseBreak,
     decreaseBreak,
+    loadTodaySessions,
   } = useTimer();
 
   useEffect(() => {
     localStorage.setItem("isMini", isMini.toString());
   }, [isMini]);
 
+  // Listen to auth changes
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // Wrap in an async IIFE
+        (async () => {
+          await loadTodaySessions();
+        })();
+      }
     });
+
     return () => listener.subscription.unsubscribe();
   }, []);
 
@@ -57,15 +67,20 @@ export default function TimerPage({ openLogin }: TimerPageProps) {
       {/* AUTH BUTTON */}
       <div className="absolute top-4 right-4">
         <button
-          onClick={user ? () => supabase.auth.signOut() : openLogin}
+          onClick={
+            user ? () => supabase.auth.signOut() : () => setShowAuthModal(true)
+          }
           className="px-4 py-2 text-white bg-red-600 rounded-full hover:bg-red-700 transition"
         >
           {user ? "Log out" : "Sign in"}
         </button>
       </div>
 
+      {/* TIMER AND STATS */}
       <div
-        className={`flex flex-col items-center transition-all ${isMini ? "gap-2 max-w-xs" : "gap-6 max-w-xl"}`}
+        className={`flex flex-col items-center transition-all ${
+          isMini ? "gap-2 max-w-xs" : "gap-6 max-w-xl"
+        }`}
       >
         <Timer
           timeLeft={timeLeft}
@@ -95,7 +110,6 @@ export default function TimerPage({ openLogin }: TimerPageProps) {
 
         <MiniToggle isMini={isMini} setIsMini={setIsMini} />
 
-        {/* Stats */}
         <Stats sessions={sessions} streak={streak} bestStreak={bestStreak} />
 
         <div className="mt-4 text-sm text-gray-400 text-center">
@@ -117,6 +131,14 @@ export default function TimerPage({ openLogin }: TimerPageProps) {
           />
         </div>
       </div>
+
+      {/* AUTH MODAL */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
     </div>
   );
 }
