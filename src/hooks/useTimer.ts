@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import useLocalStorage from "./useLocalStorage";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -167,7 +167,7 @@ export default function useTimer(): UseTimerReturn {
     confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
   }
 
-  async function loadTodaySessions() {
+  const loadTodaySessions = useCallback(async () => {
     if (!user) return 0;
 
     const today = new Date();
@@ -179,11 +179,17 @@ export default function useTimer(): UseTimerReturn {
       .eq("user_id", user.id)
       .gte("completed_at", today.toISOString());
 
-    if (error) console.error("Load sessions error:", error);
+    if (error)
+      console.error(
+        "Load sessions error:",
+        error?.message,
+        error?.code,
+        error?.details,
+      );
 
     setSessions(count ?? 0);
     return count ?? 0;
-  }
+  }, [user]);
 
   useEffect(() => {
     if (user) loadTodaySessions();

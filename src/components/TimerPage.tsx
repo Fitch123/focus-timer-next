@@ -9,9 +9,11 @@ import MiniToggle from "./MiniToggle";
 import Stats from "./Stats";
 import { supabase } from "../lib/supabase";
 import AuthModal from "./AuthModal"; // import your modal
+import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
 export default function TimerPage() {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isMini, setIsMini] = useState<boolean>(
     () =>
       typeof window !== "undefined" &&
@@ -40,6 +42,8 @@ export default function TimerPage() {
     loadTodaySessions,
   } = useTimer();
 
+  const router = useRouter();
+
   useEffect(() => {
     localStorage.setItem("isMini", isMini.toString());
   }, [isMini]);
@@ -62,14 +66,20 @@ export default function TimerPage() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  async function handleLogout() {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Sign out error:", err);
+    }
+  }
+
   return (
     <div className="h-screen relative flex items-center justify-center transition-all">
       {/* AUTH BUTTON */}
       <div className="absolute top-4 right-4">
         <button
-          onClick={
-            user ? () => supabase.auth.signOut() : () => setShowAuthModal(true)
-          }
+          onClick={user ? handleLogout : () => setShowAuthModal(true)}
           className="px-4 py-2 text-white bg-red-600 rounded-full hover:bg-red-700 transition"
         >
           {user ? "Log out" : "Sign in"}
@@ -131,6 +141,13 @@ export default function TimerPage() {
           />
         </div>
       </div>
+
+      <button
+        className="mt-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+        onClick={() => router.push("/pricing")}
+      >
+        Upgrade to Pro
+      </button>
 
       {/* AUTH MODAL */}
       {showAuthModal && (
