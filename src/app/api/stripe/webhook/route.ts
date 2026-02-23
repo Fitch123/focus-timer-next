@@ -5,14 +5,25 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-01-28.clover",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // service role required for webhook
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
+
+// Real Stripe price IDs mapped to plan hierarchy
+const planHierarchy: Record<string, number> = {
+  price_1T2gkyAmgcW9BNOee4v4K80N: 1, // monthly
+  price_1T2gmZAmgcW9BNOegQnPWB2V: 2, // yearly
+  price_1T2gn6AmgcW9BNOe3PRBKEhB: 3, // lifetime
+};
+
+const priceToStatus: Record<string, "monthly" | "yearly" | "lifetime"> = {
+  price_1T2gkyAmgcW9BNOee4v4K80N: "monthly",
+  price_1T2gmZAmgcW9BNOegQnPWB2V: "yearly",
+  price_1T2gn6AmgcW9BNOe3PRBKEhB: "lifetime",
+};
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -30,8 +41,10 @@ export async function POST(req: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!,
     );
-  } catch (err: any) {
-    console.error("Webhook signature verification failed:", err.message);
+  } catch (err) {
+    const message =
+      err instanceof Stripe.errors.StripeError ? err.message : "Unknown error";
+    console.error("Webhook signature verification failed:", message);
     return new NextResponse("Webhook Error", { status: 400 });
   }
 
@@ -68,55 +81,76 @@ export async function POST(req: Request) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// 1️⃣ CHECKOUT SESSION (Lifetime + initial subscription metadata)
+// 1️⃣ CHECKOUT SESSION
 ////////////////////////////////////////////////////////////////////////////////
 
 async function handleCheckoutSession(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId;
+  if (!userId) return console.error("No userId in metadata");
 
-  if (!userId) {
-    console.error("No userId in metadata");
-    return;
-  }
-
-  // LIFETIME (mode: payment)
+  // LIFETIME PAYMENT
   if (session.mode === "payment") {
     const paymentIntentId = session.payment_intent as string;
 
-    await supabase.from("lifetime_access").upsert(
-      {
-        user_id: userId,
-        stripe_payment_intent_id: paymentIntentId,
-      },
-      { onConflict: "stripe_payment_intent_id" },
-    );
+    await supabase
+      .from("lifetime_access")
+      .upsert(
+        { user_id: userId, stripe_payment_intent_id: paymentIntentId },
+        { onConflict: "stripe_payment_intent_id" },
+      );
 
-    await supabase.from("profiles").update({ is_pro: true }).eq("id", userId);
+    // Cancel all active subscriptions after lifetime purchase
+    const { data: existingSubs } = await supabase
+      .from("subscriptions")
+      .select("stripe_subscription_id")
+      .eq("user_id", userId)
+      .in("status", ["active", "trialing"]);
+
+    for (const sub of existingSubs ?? []) {
+      if (sub.stripe_subscription_id) {
+        try {
+          await stripe.subscriptions.cancel(sub.stripe_subscription_id);
+        } catch (err) {
+          if (
+            err instanceof Stripe.errors.StripeError &&
+            err.code === "resource_missing"
+          ) {
+            console.warn(
+              `Subscription ${sub.stripe_subscription_id} not found in Stripe`,
+            );
+          } else {
+            throw err;
+          }
+        }
+
+        await supabase
+          .from("subscriptions")
+          .update({ status: "canceled" })
+          .eq("stripe_subscription_id", sub.stripe_subscription_id);
+      }
+    }
+
+    await supabase
+      .from("profiles")
+      .update({ is_pro: true, subscription_status: "lifetime" })
+      .eq("id", userId);
 
     return;
   }
 
-  // SUBSCRIPTION (mode: subscription)
+  // SUBSCRIPTION SESSION (monthly/yearly)
   if (session.mode === "subscription") {
     const subscriptionId = session.subscription as string;
     const customerId = session.customer as string;
+    if (!subscriptionId || !customerId) return;
 
-    if (!subscriptionId || !customerId) {
-      console.error("Missing subscription or customer ID");
-      return;
-    }
-
-    // 🔥 Save Stripe customer ID to profile
     await supabase
       .from("profiles")
-      .update({
-        stripe_customer_id: customerId,
-      })
+      .update({ stripe_customer_id: customerId })
       .eq("id", userId);
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
-    await handleSubscriptionUpdated(subscription);
+    await handleSubscriptionUpdated(subscription, userId);
   }
 }
 
@@ -124,78 +158,158 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session) {
 // 2️⃣ SUBSCRIPTION CREATED / UPDATED
 ////////////////////////////////////////////////////////////////////////////////
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId;
+async function handleSubscriptionUpdated(
+  subscription: Stripe.Subscription,
+  knownUserId?: string,
+) {
+  // Resolve userId from metadata or via stripe_customer_id in profiles
+  let userId = knownUserId ?? subscription.metadata?.userId;
 
   if (!userId) {
-    console.error("No userId in subscription metadata");
-    return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("stripe_customer_id", subscription.customer as string)
+      .maybeSingle();
+
+    if (!profile) {
+      console.error("No profile found for subscription:", subscription.id);
+      return;
+    }
+
+    userId = profile.id;
   }
+
+  const priceId = subscription.items.data[0]?.price.id;
+
+  // Bug fix: current_period_end is on the subscription, not the item
+  const currentPeriodEnd = subscription.items.data[0]?.plan?.interval
+    ? new Date((subscription.items.data[0] as any).current_period_end * 1000)
+    : null;
 
   const isActive =
     subscription.status === "active" || subscription.status === "trialing";
 
-  const priceId = subscription.items.data[0]?.price.id;
-
-  const currentPeriodEndUnix = subscription.items.data[0]?.current_period_end;
-
-  const currentPeriodEnd = currentPeriodEndUnix
-    ? new Date(currentPeriodEndUnix * 1000)
-    : null;
-
-  // Check lifetime
+  // Check lifetime access
   const { data: lifetime } = await supabase
     .from("lifetime_access")
     .select("id")
     .eq("user_id", userId)
     .maybeSingle();
-
   const hasLifetime = !!lifetime;
 
-  console.log("USER ID FROM METADATA:", userId);
+  // If user already has lifetime, cancel this subscription immediately
+  if (hasLifetime) {
+    try {
+      await stripe.subscriptions.cancel(subscription.id);
+    } catch (err) {
+      if (
+        err instanceof Stripe.errors.StripeError &&
+        err.code === "resource_missing"
+      ) {
+        console.warn(`Subscription ${subscription.id} not found in Stripe`);
+      } else {
+        throw err;
+      }
+    }
 
-  const { data: profileCheck } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", userId)
-    .single();
+    await supabase
+      .from("subscriptions")
+      .update({ status: "canceled" })
+      .eq("stripe_subscription_id", subscription.id);
 
-  console.log("PROFILE EXISTS:", profileCheck);
+    return;
+  }
 
-  // Upsert subscription
-  const { data, error } = await supabase
+  // Check existing active subscriptions for hierarchy enforcement
+  const { data: existingSubs } = await supabase
     .from("subscriptions")
-    .upsert(
-      {
-        user_id: userId,
-        stripe_subscription_id: subscription.id,
-        stripe_price_id: priceId,
-        status: subscription.status,
-        current_period_end: currentPeriodEnd,
-      },
-      { onConflict: "stripe_subscription_id" },
-    )
-    .select();
+    .select("stripe_subscription_id, stripe_price_id, status")
+    .eq("user_id", userId)
+    .in("status", ["active", "trialing"])
+    .neq("stripe_subscription_id", subscription.id); // exclude current one
 
-  console.log("SUB UPSERT RESULT:", data);
-  console.log("SUB UPSERT ERROR:", error);
+  const subsArray = existingSubs ?? [];
+  const newPlanLevel = planHierarchy[priceId!] ?? 0;
+  const maxExistingLevel = Math.max(
+    0,
+    ...subsArray.map((s) => planHierarchy[s.stripe_price_id!] ?? 0),
+  );
 
-  // Update profile
-  await supabase
-    .from("profiles")
-    .update({
+  // Block duplicate plan purchase
+  if (subsArray.find((s) => s.stripe_price_id === priceId)) {
+    console.warn("Duplicate subscription attempt blocked for user:", userId);
+    return;
+  }
+
+  // Block downgrade attempt
+  if (newPlanLevel < maxExistingLevel) {
+    console.warn("Downgrade attempt blocked for user:", userId);
+    return;
+  }
+
+  // Upgrade: cancel lower-tier subscriptions
+  if (newPlanLevel > maxExistingLevel && subsArray.length > 0) {
+    for (const sub of subsArray) {
+      if (sub.stripe_subscription_id) {
+        try {
+          await stripe.subscriptions.cancel(sub.stripe_subscription_id);
+        } catch (err) {
+          if (
+            err instanceof Stripe.errors.StripeError &&
+            err.code === "resource_missing"
+          ) {
+            console.warn(
+              `Subscription ${sub.stripe_subscription_id} not found in Stripe`,
+            );
+          } else {
+            throw err;
+          }
+        }
+
+        await supabase
+          .from("subscriptions")
+          .update({ status: "canceled" })
+          .eq("stripe_subscription_id", sub.stripe_subscription_id);
+      }
+    }
+  }
+
+  // Upsert current subscription
+  await supabase.from("subscriptions").upsert(
+    {
+      user_id: userId,
       stripe_subscription_id: subscription.id,
-      subscription_status: subscription.status,
-      is_pro: hasLifetime ? true : isActive,
-    })
-    .eq("id", userId);
+      stripe_price_id: priceId,
+      status: subscription.status,
+      current_period_end: currentPeriodEnd,
+    },
+    { onConflict: "stripe_subscription_id" },
+  );
 
-  console.log("FULL SUB OBJECT:", subscription);
-  console.log("SUB METADATA:", subscription.metadata);
+  // Derive subscription_status from real price ID
+  const subscriptionStatus =
+    isActive && priceId ? (priceToStatus[priceId] ?? "free") : "free";
+
+  const isPro = subscriptionStatus !== "free";
+
+  if (isPro) {
+    await supabase
+      .from("profiles")
+      .update({
+        stripe_customer_id: subscription.customer as string,
+        stripe_subscription_id: subscription.id,
+        subscription_status: subscriptionStatus,
+        is_pro: true,
+      })
+      .eq("id", userId);
+  }
+
+  console.log("Subscription updated:", { userId, subscriptionStatus, isPro });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// 3️⃣ SUBSCRIPTION DELETED (DOWNGRADE LOGIC)
+// 3️⃣ SUBSCRIPTION DELETED
 ////////////////////////////////////////////////////////////////////////////////
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -203,30 +317,40 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, lifetime_access")
+    .select("id")
     .eq("stripe_customer_id", customerId)
     .single();
 
   if (!profile) {
-    console.error("No profile found for deleted subscription");
+    console.error(
+      "No profile found for deleted subscription, customer:",
+      customerId,
+    );
     return;
   }
 
-  // Update subscription record
+  // Check lifetime access from its own table (not a profiles column)
+  const { data: lifetime } = await supabase
+    .from("lifetime_access")
+    .select("id")
+    .eq("user_id", profile.id)
+    .maybeSingle();
+
+  const hasLifetime = !!lifetime;
+
   await supabase
     .from("subscriptions")
-    .update({
-      status: "canceled",
-    })
+    .update({ status: "canceled" })
     .eq("stripe_subscription_id", subscription.id);
 
-  // Downgrade only if NOT lifetime
   await supabase
     .from("profiles")
     .update({
-      subscription_status: "canceled",
+      subscription_status: hasLifetime ? "lifetime" : "canceled",
       stripe_subscription_id: null,
-      is_pro: profile.lifetime_access ? true : false,
+      is_pro: hasLifetime,
     })
     .eq("id", profile.id);
+
+  console.log("Subscription deleted:", { userId: profile.id, hasLifetime });
 }
