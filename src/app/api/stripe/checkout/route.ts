@@ -53,7 +53,16 @@ export async function POST(req: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+
       metadata: { userId: user.id },
+
+      ...(type === "subscription" && {
+        subscription_data: {
+          metadata: {
+            userId: user.id, // 🔥 REQUIRED
+          },
+        },
+      }),
     });
 
     return NextResponse.json({ url: session.url });
