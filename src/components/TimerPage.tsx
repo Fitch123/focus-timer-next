@@ -7,19 +7,41 @@ import Settings from "./Settings";
 import Timer from "./Timer";
 import MiniToggle from "./MiniToggle";
 import Stats from "./Stats";
+import AuthModal from "./AuthModal";
 import { supabase } from "../lib/supabase";
-import AuthModal from "./AuthModal"; // import your modal
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
 export default function TimerPage() {
+  const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
-  const [isMini, setIsMini] = useState<boolean>(
-    () =>
-      typeof window !== "undefined" &&
-      localStorage.getItem("isMini") === "true",
+  const [isMini, setIsMini] = useState<boolean>(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem("isMini") === "true"
+      : false,
   );
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  /*
+    🔥 This is the important part:
+    Connect timer to backend XP logic
+  */
+  const handleFocusComplete = async (minutes: number) => {
+    if (!user) return;
+
+    try {
+      await fetch("/api/complete-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ duration: minutes * 60 }),
+      });
+
+      router.refresh(); // refresh server data (XP, rank, etc.)
+    } catch (err) {
+      console.error("Session completion error:", err);
+    }
+  };
 
   const {
     focusMinutes,
@@ -27,40 +49,31 @@ export default function TimerPage() {
     timeLeft,
     mode,
     isRunning,
-    sessions,
+    sessionsToday,
     DAILY_GOAL,
     goalProgress,
     goalCompleted,
-    streak,
-    bestStreak,
     setIsRunning,
     resetTimer,
     increaseFocus,
     decreaseFocus,
     increaseBreak,
     decreaseBreak,
-    loadTodaySessions,
-  } = useTimer();
+  } = useTimer({ onFocusComplete: handleFocusComplete });
 
-  const router = useRouter();
-
+  /* Persist mini mode */
   useEffect(() => {
     localStorage.setItem("isMini", isMini.toString());
   }, [isMini]);
 
-  // Listen to auth changes
+  /* Auth listener */
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
-
-      if (session?.user) {
-        // Wrap in an async IIFE
-        (async () => {
-          await loadTodaySessions();
-        })();
-      }
     });
 
     return () => listener.subscription.unsubscribe();
@@ -86,7 +99,7 @@ export default function TimerPage() {
         </button>
       </div>
 
-      {/* TIMER AND STATS */}
+      {/* MAIN CONTENT */}
       <div
         className={`flex flex-col items-center transition-all ${
           isMini ? "gap-2 max-w-xs" : "gap-6 max-w-xl"
@@ -98,8 +111,6 @@ export default function TimerPage() {
           focusMinutes={focusMinutes}
           breakMinutes={breakMinutes}
           isMini={isMini}
-          streak={streak}
-          bestStreak={bestStreak}
         />
 
         <Controls
@@ -120,8 +131,9 @@ export default function TimerPage() {
 
         <MiniToggle isMini={isMini} setIsMini={setIsMini} />
 
-        <Stats sessions={sessions} streak={streak} bestStreak={bestStreak} />
+        <Stats sessions={sessionsToday} />
 
+        {/* Daily Goal */}
         <div className="mt-4 text-sm text-gray-400 text-center">
           {goalCompleted ? (
             <span className="text-green-400 font-semibold">
@@ -140,14 +152,15 @@ export default function TimerPage() {
             style={{ width: `${(goalProgress / DAILY_GOAL) * 100}%` }}
           />
         </div>
-      </div>
 
-      <button
-        className="mt-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-        onClick={() => router.push("/pricing")}
-      >
-        Upgrade to Pro
-      </button>
+        {/* Upgrade */}
+        <button
+          className="mt-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          onClick={() => router.push("/pricing")}
+        >
+          Upgrade to Pro
+        </button>
+      </div>
 
       {/* AUTH MODAL */}
       {showAuthModal && (

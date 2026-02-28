@@ -4,8 +4,6 @@ interface TimerProps {
   focusMinutes: number;
   breakMinutes: number;
   isMini: boolean;
-  streak: number;
-  bestStreak: number;
   user?: any;
   onSessionComplete?: () => void;
 }
@@ -16,8 +14,6 @@ export default function Timer({
   focusMinutes,
   breakMinutes,
   isMini,
-  streak,
-  bestStreak,
 }: TimerProps) {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = ("0" + (timeLeft % 60)).slice(-2);
