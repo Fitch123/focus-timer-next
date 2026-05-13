@@ -14,14 +14,14 @@ const supabase = createClient(
 
 // Real Stripe price IDs mapped to plan hierarchy
 const planHierarchy: Record<string, number> = {
-  price_1T2gkyAmgcW9BNOee4v4K80N: 1, // monthly
-  price_1T2gmZAmgcW9BNOegQnPWB2V: 2, // yearly
+  price_1TWif9AmgcW9BNOeLw3oXorV: 1, // monthly
+  price_1TCTNFAmgcW9BNOeUxYzbGtY: 2, // yearly
   price_1T2gn6AmgcW9BNOe3PRBKEhB: 3, // lifetime
 };
 
 const priceToStatus: Record<string, "monthly" | "yearly" | "lifetime"> = {
-  price_1T2gkyAmgcW9BNOee4v4K80N: "monthly",
-  price_1T2gmZAmgcW9BNOegQnPWB2V: "yearly",
+  price_1TWif9AmgcW9BNOeLw3oXorV: "monthly",
+  price_1TCTNFAmgcW9BNOeUxYzbGtY: "yearly",
   price_1T2gn6AmgcW9BNOe3PRBKEhB: "lifetime",
 };
 

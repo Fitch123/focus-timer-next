@@ -15,7 +15,7 @@ const supabase = createClient(
 
 // 🔹 Plan info: name + hierarchy level
 const planInfo: Record<string, { name: string; level: number }> = {
-  price_1T2gkyAmgcW9BNOee4v4K80N: { name: "Monthly", level: 1 },
+  price_1TWif9AmgcW9BNOeLw3oXorV: { name: "Monthly", level: 1 },
   price_1TCTNFAmgcW9BNOeUxYzbGtY: { name: "Yearly", level: 2 },
   price_1TCTNtAmgcW9BNOegRxsUn1D: { name: "Lifetime", level: 3 },
 };
