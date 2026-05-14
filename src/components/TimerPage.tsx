@@ -225,11 +225,6 @@ export default function TimerPage() {
             />
 
             <QuoteCard />
-
-            <SettingsModal
-              isOpen={showSettings}
-              onClose={() => setShowSettings(false)}
-            />
           </div>
           {/* RIGHT = CARDS */}
           {!isMini && user && (
@@ -255,6 +250,11 @@ export default function TimerPage() {
           )}
         </div>
       </div>
+
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
 
       {/* Rank Up Toast */}
       {rankUpMessage && (
