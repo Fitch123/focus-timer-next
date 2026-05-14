@@ -26,7 +26,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
 
       {/* Timer */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
           Timer
         </h3>
 
@@ -77,7 +77,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
 
       {/* Sound */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
           Sound
         </h3>
 
@@ -125,7 +125,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
           </span>
           <div className="flex items-center gap-2">
             <span
-              className="text-xs w-8 text-right"
+              className="text-sm w-8 text-right"
               style={{ color: "var(--text)" }}
             >
               {Math.round((settings.alarmVolume ?? 0.9) * 100)}%
@@ -147,7 +147,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
 
       {/* Theme */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
           Theme
         </h3>
         <div className="flex gap-2">
@@ -155,7 +155,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
             <button
               key={t}
               onClick={() => updateSettings({ theme: t })}
-              className="flex-1 py-1.5 rounded-xl text-xs font-medium capitalize transition-all"
+              className="flex-1 py-1.5 rounded-xl text-sm font-medium capitalize transition-all"
               style={{
                 background:
                   settings.theme === t
@@ -176,7 +176,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
 
       {/* Mode */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
           Mode
         </h3>
         <div className="flex justify-between items-center">
@@ -187,7 +187,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
             >
               🏆 Rank Mode
             </span>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text)" }}>
+            <p className="text-sm mt-0.5" style={{ color: "var(--text)" }}>
               No pause or skip — earn +50% XP
             </p>
           </div>
@@ -199,7 +199,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
       </div>
 
       {/* Account Link */}
-      <p className="text-xs text-center" style={{ color: "var(--text)" }}>
+      <p className="text-sm text-center" style={{ color: "var(--text)" }}>
         For more settings, go to{" "}
         <a
           href="/account?tab=preferences"
