@@ -173,9 +173,13 @@ export default function TimerPage() {
       />
 
       {/* MAIN CONTENT */}
-      <div className="flex flex-1 justify-center px-6 py-6">
+      <div className="flex flex-1 justify-center items-start px-6 pt-4 pb-28">
         {" "}
-        <div className="flex w-full max-w-3xl gap-4 items-start justify-center">
+        <div
+          className="flex w-full max-w-3xl gap-4 items-start justify-center"
+          style={{ transform: "scale(1.1)", transformOrigin: "top center" }}
+        >
+          {" "}
           {/* LEFT = TIMER */}
           <div className="flex flex-col items-center gap-4 flex-1">
             <Timer
@@ -227,10 +231,9 @@ export default function TimerPage() {
               onClose={() => setShowSettings(false)}
             />
           </div>
-
           {/* RIGHT = CARDS */}
           {!isMini && user && (
-            <div className="w-[240px] flex flex-col gap-5">
+            <div className="w-[220px] flex flex-col gap-5">
               <TodayCard
                 goalProgress={goalProgress}
                 DAILY_GOAL={DAILY_GOAL}

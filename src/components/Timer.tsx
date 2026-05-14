@@ -64,8 +64,8 @@ export default function Timer({
 
           {!isMini && (
             <p className="text-sm text-center" style={{ color: "var(--text)" }}>
-              {focusMinutes}m focus · {breakMinutes}m break · {longBreakMinutes}
-              m long
+              {focusMinutes}m Focus · {breakMinutes}m Break · {longBreakMinutes}
+              m Long
             </p>
           )}
         </div>

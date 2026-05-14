@@ -29,7 +29,10 @@ export default function Navbar({
       className="w-full py-4"
       style={{ background: "var(--bg)", color: "var(--text)" }}
     >
-      <div className="max-w-3xl mx-auto px-6 flex items-center justify-between relative pb-4">
+      <div
+        className="mx-auto px-0 flex items-center justify-between relative pb-4 p"
+        style={{ maxWidth: "calc(768px * 1.1)" }}
+      >
         {/* Logo */}
         <div
           className="font-bold text-lg cursor-pointer"
@@ -59,6 +62,7 @@ export default function Navbar({
             <Settings size={22} className="text-[var(--svg)]" />
           </button>
 
+          {/* Profile / Auth */}
           {user ? (
             <ProfileMenu user={user} onLogout={onLogout} onSave={onSave} />
           ) : (
