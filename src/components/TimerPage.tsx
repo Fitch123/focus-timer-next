@@ -188,6 +188,22 @@ export default function TimerPage() {
               isRunning={isRunning}
             />
 
+            {/* Rank Mode indicator */}
+            {rankMode && (
+              <div
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--ring) 15%, transparent)",
+                  color: "var(--ring)",
+                  border:
+                    "1px solid color-mix(in srgb, var(--ring) 30%, transparent)",
+                }}
+              >
+                🏆 Rank Mode — +50% XP
+              </div>
+            )}
+
             <TimerPresets
               isRunning={isRunning}
               isPaused={isPaused}

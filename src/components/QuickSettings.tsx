@@ -158,7 +158,9 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
               className="flex-1 py-1.5 rounded-xl text-xs font-medium capitalize transition-all"
               style={{
                 background:
-                  settings.theme === t ? "var(--text)" : "rgba(0,0,0,0.06)",
+                  settings.theme === t
+                    ? "var(--text)"
+                    : "rgba(77, 74, 74, 0.06)",
                 color: settings.theme === t ? "var(--bg)" : "var(--text)",
               }}
             >

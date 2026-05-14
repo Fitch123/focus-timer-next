@@ -74,7 +74,7 @@ export default function TimerPresets({
             style={
               isActive
                 ? { background: "var(--text)", color: "var(--bg)" }
-                : { background: "rgba(0,0,0,0.06)", color: "var(--text)" }
+                : { background: "rgba(77, 74, 74, 0.06)", color: "var(--text)" }
             }
           >
             {preset.label}
