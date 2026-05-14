@@ -96,6 +96,24 @@ export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
     setIsRunning(true);
   };
 
+  // ✅ Handle session completion (focus or break)
+  useEffect(() => {
+    const handleSpace = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+      e.preventDefault();
+      if (isRunning) pause();
+      else start();
+    };
+
+    document.addEventListener("keydown", handleSpace);
+    return () => document.removeEventListener("keydown", handleSpace);
+  }, [isRunning]);
+
   const startRef = useRef(start);
 
   const notificationsEnabledRef = useRef(notificationsEnabled);
