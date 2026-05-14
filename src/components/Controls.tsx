@@ -2,7 +2,7 @@
 
 interface ControlsProps {
   isRunning: boolean;
-  strictMode: boolean;
+  rankMode: boolean;
   isTransitioning: boolean;
   start: () => void;
   pause: () => void;
@@ -12,14 +12,14 @@ interface ControlsProps {
 
 export default function Controls({
   isRunning,
-  strictMode,
+  rankMode,
   isTransitioning,
   start,
   pause,
   reset,
   skip,
 }: ControlsProps) {
-  const isBlocked = strictMode && (isRunning || isTransitioning);
+  const isBlocked = rankMode && (isRunning || isTransitioning);
 
   const handleToggle = () => {
     if (isRunning) pause();
@@ -48,10 +48,10 @@ export default function Controls({
       {/* Reset + Skip */}
       <div className="flex gap-2">
         <button
-          disabled={strictMode}
+          disabled={rankMode}
           onClick={reset}
           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all
-            ${strictMode ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 active:scale-[0.98]"}`}
+            ${rankMode ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 active:scale-[0.98]"}`}
           style={{
             background: "var(--card)",
             color: "var(--text)",
@@ -62,10 +62,10 @@ export default function Controls({
           Reset
         </button>
         <button
-          disabled={strictMode}
+          disabled={rankMode}
           onClick={skip}
           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all
-            ${strictMode ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 active:scale-[0.98]"}`}
+            ${rankMode ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 active:scale-[0.98]"}`}
           style={{
             background: "var(--card)",
             color: "var(--text)",

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { duration, strictMode } = await req.json();
+    const { duration, rankMode } = await req.json();
     const completedMinutes = Math.round(duration / 60);
 
     // Get current profile
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       plannedMinutes: completedMinutes,
       completedMinutes: completedMinutes,
       currentStreak: profile?.current_streak ?? 0,
-      strictMode: strictMode ?? false,
+      rankMode: rankMode ?? false,
     });
 
     const newPoints = Math.max(0, (profile?.points ?? 0) + xp);

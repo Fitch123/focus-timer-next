@@ -6,7 +6,7 @@ import { getRankProgress } from "@/lib/ranks";
 import { createClient } from "@/utils/supabase/client";
 
 interface UseTimerOptions {
-  onFocusComplete?: (durationMinutes: number, strictMode: boolean) => void;
+  onFocusComplete?: (durationMinutes: number, rankMode: boolean) => void;
 }
 
 export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
@@ -28,7 +28,7 @@ export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
   const autoStartBreak = settings.autoStartBreak;
   const autoStartFocus = settings.autoStartFocus;
 
-  const strictMode = settings.strictMode;
+  const rankMode = settings.rankMode;
 
   const alarmSound = settings.alarmSound;
   const alarmVolume = settings.alarmVolume;
@@ -144,12 +144,12 @@ export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
 
   // ⏭ Skip
   const skip = () => {
-    if (strictMode) return;
+    if (rankMode) return;
     handleCompletion(true, false);
   };
 
   const reset = () => {
-    if (strictMode && isRunning) return;
+    if (rankMode && isRunning) return;
 
     if (countdownAudioRef.current) {
       // ✅ fully stop on reset
@@ -229,8 +229,8 @@ export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
         setSessionsToday(updated);
         setMode(nextMode);
 
-        if (strictMode) {
-          updateSettings({ strictMode: false });
+        if (rankMode) {
+          updateSettings({ rankMode: false });
         }
 
         if (autoStartBreakRef.current) {
@@ -249,7 +249,7 @@ export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
         }
 
         if (counted) {
-          onFocusComplete?.(focusMinutes, strictMode);
+          onFocusComplete?.(focusMinutes, rankMode);
           checkRankUp();
         }
       } else {
@@ -279,7 +279,7 @@ export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
       onFocusComplete,
       LONG_BREAK_INTERVAL,
       DAILY_GOAL,
-      strictMode,
+      rankMode,
       updateSettings,
       checkRankUp,
     ],
@@ -587,7 +587,7 @@ export default function useTimer({ onFocusComplete }: UseTimerOptions = {}) {
 
     autoStartBreak,
     autoStartFocus,
-    strictMode,
+    rankMode,
     alarmSound,
     alarmVolume,
     notificationsEnabled,

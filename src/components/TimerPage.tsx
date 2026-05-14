@@ -57,7 +57,7 @@ export default function TimerPage() {
       const res = await fetch("/api/complete-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ duration: minutes * 60, strictMode: wasStrict }),
+        body: JSON.stringify({ duration: minutes * 60, rankMode: wasStrict }),
       });
 
       const data = await res.json();
@@ -108,7 +108,7 @@ export default function TimerPage() {
     mode,
     isRunning,
     isPaused,
-    strictMode,
+    rankMode,
     sessionsToday,
     DAILY_GOAL,
     goalProgress,
@@ -196,7 +196,7 @@ export default function TimerPage() {
 
             <Controls
               isRunning={isRunning}
-              strictMode={strictMode}
+              rankMode={rankMode}
               isTransitioning={isTransitioning}
               start={start}
               pause={pause}

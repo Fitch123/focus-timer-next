@@ -10,7 +10,7 @@ type TimerSettings = {
   longBreakInterval: number;
   autoStartBreak: boolean;
   autoStartFocus: boolean;
-  strictMode: boolean;
+  rankMode: boolean;
   alarmSound: string;
   alarmVolume: number;
   notificationsEnabled: boolean;
@@ -33,7 +33,7 @@ const defaultSettings: TimerSettings = {
   longBreakInterval: 4,
   autoStartBreak: true,
   autoStartFocus: true,
-  strictMode: false,
+  rankMode: false,
   alarmSound: "bell",
   alarmVolume: 0.9,
   notificationsEnabled: false,
@@ -107,7 +107,7 @@ export function TimerSettingsProvider({
           longBreakInterval: data.long_break_interval ?? 4,
           autoStartBreak: data.auto_start_break ?? true,
           autoStartFocus: data.auto_start_focus ?? true,
-          strictMode: data.strict_mode ?? false,
+          rankMode: data.rank_mode ?? false,
           alarmSound: data.alarm_sound ?? "bell",
           alarmVolume: data.alarm_volume ?? 0.9,
           notificationsEnabled: data.notifications_enabled ?? true,
@@ -148,7 +148,7 @@ export function TimerSettingsProvider({
         daily_goal: Number(merged.dailyGoal),
         auto_start_break: Boolean(merged.autoStartBreak),
         auto_start_focus: Boolean(merged.autoStartFocus),
-        strict_mode: Boolean(merged.strictMode),
+        rank_mode: Boolean(merged.rankMode),
         alarm_sound: String(merged.alarmSound),
         alarm_volume: Number(merged.alarmVolume), // ✅ force number
         notifications_enabled: Boolean(merged.notificationsEnabled),
@@ -171,6 +171,7 @@ export function TimerSettingsProvider({
         long_break: Number(merged.longBreak),
         long_break_interval: Number(merged.longBreakInterval),
         daily_goal: Number(merged.dailyGoal),
+        rank_mode: Boolean(merged.rankMode),
         alarm_volume: Number(merged.alarmVolume),
       });
     }

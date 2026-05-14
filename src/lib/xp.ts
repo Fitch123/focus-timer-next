@@ -2,14 +2,14 @@ type CalculateXPParams = {
   plannedMinutes: number;
   completedMinutes: number;
   currentStreak: number;
-  strictMode?: boolean;
+  rankMode?: boolean;
 };
 
 export function calculateSessionXP({
   plannedMinutes,
   completedMinutes,
   currentStreak,
-  strictMode = false,
+  rankMode = false,
 }: CalculateXPParams) {
   // Safety guards
   const safePlanned = Math.max(plannedMinutes, 1);
@@ -57,7 +57,7 @@ export function calculateSessionXP({
   xp += streakBonus;
 
   // 🔥 Strict Mode Bonus — 50% extra XP
-  const strictBonus = strictMode ? Math.round(xp * 0.5) : 0;
+  const strictBonus = rankMode ? Math.round(xp * 0.5) : 0;
   xp += strictBonus;
 
   // 🔹 Final rounding

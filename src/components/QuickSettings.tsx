@@ -2,6 +2,7 @@
 
 import { useTimerSettings } from "@/context/TimerSettingsContext";
 import { useRef } from "react";
+import Toggle from "./Toggle";
 
 type QuickSettingsProps = {
   onClose: () => void;
@@ -25,10 +26,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
 
       {/* Timer */}
       <div className="space-y-3">
-        <h3
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "var(--text)" }}
-        >
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
           Timer
         </h3>
 
@@ -79,10 +77,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
 
       {/* Sound */}
       <div className="space-y-3">
-        <h3
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "var(--text)" }}
-        >
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
           Sound
         </h3>
 
@@ -152,10 +147,7 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
 
       {/* Theme */}
       <div className="space-y-3">
-        <h3
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "var(--text)" }}
-        >
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
           Theme
         </h3>
         <div className="flex gap-2">
@@ -177,6 +169,30 @@ export default function QuickSettings({ onClose }: QuickSettingsProps) {
                   : "🌿 Forest"}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Mode */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+          Mode
+        </h3>
+        <div className="flex justify-between items-center">
+          <div>
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--text)" }}
+            >
+              🏆 Rank Mode
+            </span>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text)" }}>
+              No pause or skip — earn +50% XP
+            </p>
+          </div>
+          <Toggle
+            enabled={settings.rankMode}
+            setEnabled={(val) => updateSettings({ rankMode: val })}
+          />
         </div>
       </div>
 

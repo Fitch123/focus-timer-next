@@ -2,7 +2,7 @@
 
 type Props = {
   isRunning: boolean;
-  strictMode: boolean;
+  rankMode: boolean;
   isTransitioning: boolean;
   increaseFocus: () => void;
   decreaseFocus: () => void;
@@ -12,7 +12,7 @@ type Props = {
 
 export default function Settings({
   isRunning,
-  strictMode,
+  rankMode,
   isTransitioning,
   increaseFocus,
   decreaseFocus,

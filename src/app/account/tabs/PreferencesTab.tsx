@@ -97,20 +97,6 @@ export default function PreferencesTab() {
         </div>
       </div>
 
-      {/* Focus Mode */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-          Focus Mode
-        </h3>
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Strict Mode</span>
-          <Toggle
-            enabled={settings.strictMode}
-            setEnabled={(val) => updateSettings({ strictMode: val })}
-          />
-        </div>
-      </div>
-
       {/* Notifications */}
       <div className="space-y-4">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
