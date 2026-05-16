@@ -148,7 +148,7 @@ export default function ProfileMenu({
               >
                 {username ?? user?.email ?? "User"}
               </span>
-              <span className="text-xs" style={{ color: "var(--muted)" }}>
+              <span className="text-xs" style={{ color: "var(--text)" }}>
                 Manage your account
               </span>
             </div>

@@ -78,7 +78,7 @@ export default function Navbar({
 
         {/* Border */}
         <div
-          className="absolute bottom-0 left-6 right-6"
+          className="absolute bottom-0 left-0 right-0"
           style={{ height: "0.5px", background: "rgba(0,0,0,0.08)" }}
         />
       </div>

@@ -44,7 +44,7 @@ export default function Timer({
     <div className="flex flex-col items-center justify-center">
       {/* MODE LABEL */}
       <p
-        className="text-xs font-bold uppercase tracking-[0.2em] mb-6"
+        className="text-sm font-bold uppercase tracking-[0.2em] mb-6"
         style={{ color: "var(--accent)" }}
       >
         {modeLabel}
