@@ -10,7 +10,7 @@ export default function Toggle({ enabled, setEnabled }: ToggleProps) {
     <button
       onClick={() => setEnabled(!enabled)}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-        enabled ? "bg-black" : "bg-gray-300"
+        enabled ? "bg-[var(--accent)]" : "bg-gray-300"
       }`}
     >
       <span

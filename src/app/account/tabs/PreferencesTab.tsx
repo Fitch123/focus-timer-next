@@ -142,7 +142,7 @@ export default function PreferencesTab() {
               className={`flex-1 py-2 rounded-xl text-xs font-medium capitalize transition-all
           ${
             settings.theme === t
-              ? "bg-black text-white"
+              ? "bg-[var(--accent)] text-white"
               : "bg-black/5 text-gray-600 hover:bg-black/10"
           }`}
             >
@@ -161,7 +161,7 @@ export default function PreferencesTab() {
           onClick={handleSave}
           className="px-4 py-2 bg-black text-white rounded-lg text-sm"
         >
-          Save Preferences
+          Save
         </button>
         {saved && <span className="text-sm text-green-500">Saved ✓</span>}
       </div>
