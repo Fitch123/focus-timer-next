@@ -166,6 +166,11 @@ export default function LofiPlayer() {
             playerReady.current = true;
             e.target.setVolume(pendingVolume.current ?? volume);
             pendingVolume.current = null;
+
+            if (pendingPlay.current) {
+              e.target.playVideo();
+              pendingPlay.current = false;
+            }
           },
         },
       });
@@ -205,13 +210,19 @@ export default function LofiPlayer() {
     ytPlayer.current?.setVolume(volume);
   }, [volume]);
 
+  const pendingPlay = useRef(false);
+
   const togglePlay = () => {
-    if (!ytPlayer.current) return;
+    if (!playerReady.current) {
+      pendingPlay.current = true;
+      setPlaying(true);
+      return;
+    }
     if (playing) {
-      ytPlayer.current.pauseVideo();
+      ytPlayer.current?.pauseVideo();
       setPlaying(false);
     } else {
-      ytPlayer.current.playVideo();
+      ytPlayer.current?.playVideo();
       setPlaying(true);
     }
   };
