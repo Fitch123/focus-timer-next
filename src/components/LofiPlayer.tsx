@@ -27,7 +27,7 @@ type YTEvent = {
 import { useEffect, useRef, useState } from "react";
 
 const streams = [
-  { label: "Lofi Girl", id: "jfKfPfyJRdk" },
+  { label: "Lofi Girl", id: "EWrX250Zhko" },
   { label: "Chillhop", id: "5yx6BWlEVcY" },
   { label: "Synthwave", id: "4xDzrJKXOOY" },
   { label: "Zelda Lofi", id: "MsCrN9dvTcw" },
