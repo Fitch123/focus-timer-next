@@ -57,7 +57,7 @@ export default function Timer({
         <TimerRing
           progress={progress}
           isRunning={isRunning}
-          size={isMini ? 200 : isDesktop ? 300 : 260}
+          size={isMini ? 200 : isDesktop ? 320 : 310}
         />
         <div className="absolute flex flex-col items-center justify-center gap-2">
           <h1
