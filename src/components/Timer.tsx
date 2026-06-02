@@ -8,6 +8,7 @@ interface TimerProps {
   isMini: boolean;
   longBreakMinutes?: number;
   isRunning?: boolean;
+  isDesktop?: boolean;
 }
 
 export default function Timer({
@@ -18,6 +19,7 @@ export default function Timer({
   isMini,
   longBreakMinutes,
   isRunning,
+  isDesktop,
 }: TimerProps) {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = ("0" + (timeLeft % 60)).slice(-2);
@@ -52,8 +54,11 @@ export default function Timer({
 
       {/* RING + TIMER */}
       <div className="relative flex items-center justify-center">
-        <TimerRing progress={progress} isRunning={isRunning} size={320} />
-
+        <TimerRing
+          progress={progress}
+          isRunning={isRunning}
+          size={isMini ? 200 : isDesktop ? 300 : 260}
+        />
         <div className="absolute flex flex-col items-center justify-center gap-2">
           <h1
             className={`tabular-nums font-light tracking-tight ${isMini ? "text-4xl" : "text-[80px]"}`}

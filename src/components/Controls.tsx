@@ -27,7 +27,8 @@ export default function Controls({
   };
 
   return (
-    <div className="flex flex-col gap-2 w-full max-w-[300px]">
+    <div className="flex flex-col gap-2 w-full max-w-[300px] sm:max-w-[300px] mx-auto">
+      {" "}
       {/* Start / Pause */}
       <button
         disabled={isBlocked}
@@ -44,7 +45,6 @@ export default function Controls({
       >
         {isRunning ? "Pause" : "Start"}
       </button>
-
       {/* Reset + Skip */}
       <div className="flex gap-2">
         <button

@@ -33,6 +33,9 @@ export default function TimerPage() {
       ? localStorage.getItem("isMini") === "true"
       : false,
   );
+
+  const [isDesktop, setIsDesktop] = useState(false);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { settings } = useTimerSettings();
@@ -43,10 +46,6 @@ export default function TimerPage() {
 
   const [showSettings, setShowSettings] = useState(false);
 
-  /*
-    🔥 This is the important part:
-    Connect timer to backend XP logic
-  */
   const handleFocusComplete = async (minutes: number, wasStrict: boolean) => {
     if (!user) {
       console.log("❌ no user, skipping session save");
@@ -99,6 +98,13 @@ export default function TimerPage() {
     });
 
     return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   const {
@@ -173,81 +179,83 @@ export default function TimerPage() {
       />
 
       {/* MAIN CONTENT */}
-      <div className="flex flex-1 justify-center items-start px-6 pt-4 pb-28">
-        {" "}
+      <div className="flex flex-1 justify-center items-start px-4 pt-4 pb-28">
         <div
           className="flex w-full max-w-3xl gap-4 items-start justify-center"
-          style={{ transform: "scale(1.1)", transformOrigin: "top center" }}
+          style={{
+            transform: isDesktop ? "scale(1.1)" : "scale(1)",
+            transformOrigin: "top center",
+          }}
         >
-          {" "}
-          {/* LEFT = TIMER */}
-          <div className="flex flex-col items-center gap-4 flex-1">
-            <Timer
-              timeLeft={timeLeft}
-              mode={mode}
-              focusMinutes={focusMinutes}
-              breakMinutes={breakMinutes}
-              longBreakMinutes={longBreakMinutes}
-              isMini={isMini}
-              isRunning={isRunning}
-            />
+          {/* MOBILE: stack vertically, DESKTOP: side by side */}
+          <div className="flex flex-col lg:flex-row w-full gap-4 items-start justify-center">
+            {/* LEFT = TIMER */}
+            <div className="flex flex-col items-center gap-4 flex-1 w-full">
+              <Timer
+                timeLeft={timeLeft}
+                mode={mode}
+                focusMinutes={focusMinutes}
+                breakMinutes={breakMinutes}
+                longBreakMinutes={longBreakMinutes}
+                isMini={isMini}
+                isRunning={isRunning}
+              />
 
-            {/* Rank Mode indicator */}
-            {rankMode && (
-              <div
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
-                style={{
-                  background:
-                    "color-mix(in srgb, var(--ring) 15%, transparent)",
-                  color: "var(--ring)",
-                  border:
-                    "1px solid color-mix(in srgb, var(--ring) 30%, transparent)",
-                }}
-              >
-                🏆 Rank Mode — +50% XP
+              {rankMode && (
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                  style={{
+                    background:
+                      "color-mix(in srgb, var(--ring) 15%, transparent)",
+                    color: "var(--ring)",
+                    border:
+                      "1px solid color-mix(in srgb, var(--ring) 30%, transparent)",
+                  }}
+                >
+                  🏆 Rank Mode — +50% XP
+                </div>
+              )}
+
+              <TimerPresets
+                isRunning={isRunning}
+                isPaused={isPaused}
+                onOpenSettings={() => setShowSettings(true)}
+              />
+
+              <Controls
+                isRunning={isRunning}
+                rankMode={rankMode}
+                isTransitioning={isTransitioning}
+                start={start}
+                pause={pause}
+                skip={skip}
+                reset={reset}
+              />
+
+              <QuoteCard />
+            </div>
+
+            {/* RIGHT = CARDS — below timer on mobile, side by side on desktop */}
+            {!isMini && user && (
+              <div className="w-full lg:w-[220px] flex flex-col gap-5">
+                <TodayCard
+                  goalProgress={goalProgress}
+                  DAILY_GOAL={DAILY_GOAL}
+                  goalCompleted={goalCompleted}
+                />
+                <StatsCard
+                  sessions={sessionsToday}
+                  focusMinutes={sessionsToday * focusMinutes}
+                  streak={profile?.streak ?? 0}
+                />
+                <RankCard
+                  points={profile?.points ?? 0}
+                  completedSessions={profile?.completed_sessions ?? 0}
+                  size="small"
+                />
               </div>
             )}
-
-            <TimerPresets
-              isRunning={isRunning}
-              isPaused={isPaused}
-              onOpenSettings={() => setShowSettings(true)}
-            />
-
-            <Controls
-              isRunning={isRunning}
-              rankMode={rankMode}
-              isTransitioning={isTransitioning}
-              start={start}
-              pause={pause}
-              skip={skip}
-              reset={reset}
-            />
-
-            <QuoteCard />
           </div>
-          {/* RIGHT = CARDS */}
-          {!isMini && user && (
-            <div className="w-[220px] flex flex-col gap-5">
-              <TodayCard
-                goalProgress={goalProgress}
-                DAILY_GOAL={DAILY_GOAL}
-                goalCompleted={goalCompleted}
-              />
-
-              <StatsCard
-                sessions={sessionsToday}
-                focusMinutes={sessionsToday * focusMinutes}
-                streak={profile?.streak ?? 0}
-              />
-
-              <RankCard
-                points={profile?.points ?? 0}
-                completedSessions={profile?.completed_sessions ?? 0}
-                size="small"
-              />
-            </div>
-          )}
         </div>
       </div>
 
